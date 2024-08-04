@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio Version 17
+
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThicVerb - Standalone Plugin", "ThicVerb_StandalonePlugin.vcxproj", "{ACE4D9F1-2750-0918-A2C8-61B0A37BCA73}"
+	ProjectSection(ProjectDependencies) = postProject
+		{620C23E8-7FE0-525F-BA98-24CB4308A98C} = {620C23E8-7FE0-525F-BA98-24CB4308A98C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThicVerb - VST3", "ThicVerb_VST3.vcxproj", "{D0155E42-964A-CDAF-A3DF-974B546A2A89}"
+	ProjectSection(ProjectDependencies) = postProject
+		{620C23E8-7FE0-525F-BA98-24CB4308A98C} = {620C23E8-7FE0-525F-BA98-24CB4308A98C}
+		{27E156E1-05FD-0874-DCD6-A7C9347C1B8D} = {27E156E1-05FD-0874-DCD6-A7C9347C1B8D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThicVerb - Shared Code", "ThicVerb_SharedCode.vcxproj", "{620C23E8-7FE0-525F-BA98-24CB4308A98C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThicVerb - VST3 Manifest Helper", "ThicVerb_VST3ManifestHelper.vcxproj", "{27E156E1-05FD-0874-DCD6-A7C9347C1B8D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D0155E42-964A-CDAF-A3DF-974B546A2A89}.Debug|x64.ActiveCfg = Debug|x64
+		{D0155E42-964A-CDAF-A3DF-974B546A2A89}.Debug|x64.Build.0 = Debug|x64
+		{D0155E42-964A-CDAF-A3DF-974B546A2A89}.Release|x64.ActiveCfg = Release|x64
+		{D0155E42-964A-CDAF-A3DF-974B546A2A89}.Release|x64.Build.0 = Release|x64
+		{ACE4D9F1-2750-0918-A2C8-61B0A37BCA73}.Debug|x64.ActiveCfg = Debug|x64
+		{ACE4D9F1-2750-0918-A2C8-61B0A37BCA73}.Debug|x64.Build.0 = Debug|x64
+		{ACE4D9F1-2750-0918-A2C8-61B0A37BCA73}.Release|x64.ActiveCfg = Release|x64
+		{ACE4D9F1-2750-0918-A2C8-61B0A37BCA73}.Release|x64.Build.0 = Release|x64
+		{620C23E8-7FE0-525F-BA98-24CB4308A98C}.Debug|x64.ActiveCfg = Debug|x64
+		{620C23E8-7FE0-525F-BA98-24CB4308A98C}.Debug|x64.Build.0 = Debug|x64
+		{620C23E8-7FE0-525F-BA98-24CB4308A98C}.Release|x64.ActiveCfg = Release|x64
+		{620C23E8-7FE0-525F-BA98-24CB4308A98C}.Release|x64.Build.0 = Release|x64
+		{27E156E1-05FD-0874-DCD6-A7C9347C1B8D}.Debug|x64.ActiveCfg = Debug|x64
+		{27E156E1-05FD-0874-DCD6-A7C9347C1B8D}.Debug|x64.Build.0 = Debug|x64
+		{27E156E1-05FD-0874-DCD6-A7C9347C1B8D}.Release|x64.ActiveCfg = Release|x64
+		{27E156E1-05FD-0874-DCD6-A7C9347C1B8D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
