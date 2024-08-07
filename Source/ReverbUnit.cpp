@@ -10,7 +10,8 @@
 
 #include "ReverbUnit.h"
 
-ReverbUnit::ReverbUnit(double sampleRate, int numChannels, int samplesPerBlock , juce::AudioProcessorValueTreeState& vts) {
+ReverbUnit::ReverbUnit(double sampleRate, int numChannels, int samplesPerBlock , juce::AudioProcessorValueTreeState& vts) 
+    : tempSplitBuffer(numChannels, samplesPerBlock) {
     this->numChannels = numChannels;
     this->feedbackGain = vts.getRawParameterValue("feedbackGain");
     this->delayLengthMs = vts.getRawParameterValue("delayLengthMs");
@@ -26,7 +27,6 @@ ReverbUnit::ReverbUnit(double sampleRate, int numChannels, int samplesPerBlock ,
 		this->diffusers[i].reset(new MultiChanDiffuser(sampleRate, numChannels, 100));
 	}
     this->feedbackDelay.reset(new MultiChanDelayLine(sampleRate, numChannels, feedbackGain));
-    this->tempSplitBuffer.reset(new juce::AudioBuffer<float>(numChannels, samplesPerBlock));
     srand(randomSeed->load());
     for (int i = 0; i < NUM_DIFFUSERS; ++i) {
         diffusers[i]->setDiffusionTimeMs(sampleRate, lastDiffusionTimeMs/ NUM_DIFFUSERS);
@@ -37,12 +37,12 @@ ReverbUnit::ReverbUnit(double sampleRate, int numChannels, int samplesPerBlock ,
 
 void ReverbUnit::processBlock(juce::AudioBuffer<float>& buffer) {
     updateParmas();
-    MultiChanDiffuser::splitBuffer(buffer, tempSplitBuffer.get(), buffer.getNumSamples(), numChannels);
+    MultiChanDiffuser::splitBuffer(buffer, &tempSplitBuffer, buffer.getNumSamples(), numChannels);
     for (int i = 0; i < NUM_DIFFUSERS; ++i) {
-		diffusers[i]->processMultiChannel(tempSplitBuffer.get());
+		diffusers[i]->processMultiChannel(&tempSplitBuffer);
 	}
-    feedbackDelay->processBlock(tempSplitBuffer.get());
-	MultiChanDiffuser::mergeBuffer(tempSplitBuffer.get(), buffer);
+    feedbackDelay->processBlock(&tempSplitBuffer);
+	MultiChanDiffuser::mergeBuffer(&tempSplitBuffer, buffer);
 }
 
 void ReverbUnit::updateParmas(){

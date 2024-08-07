@@ -11,13 +11,14 @@
 #include "MultiChanDiffuser.h"
 
 
-MultiChanDiffuser::MultiChanDiffuser(double sampleRate, int numChannels, double delayRangeMs) {
+MultiChanDiffuser::MultiChanDiffuser(double sampleRate, int numChannels, double delayRangeMs): mixer(numChannels) {
     this->init(sampleRate, numChannels, delayRangeMs);
 }
 void MultiChanDiffuser::init(double sampleRate, int numChannels, double delayRangeMs) {
+    samples = new float[numChannels];
     this->delayRangeMs = delayRangeMs;
     this->numChannels = numChannels;
-    const double delaySampleRange =   sampleRate * delayRangeMs * 0.001;
+    const double delaySampleRange = sampleRate * delayRangeMs * 0.001;
     this->delayLines.clear();
     for (int i = 0; i < numChannels; ++i) {
         const double rangeMax = delaySampleRange * (i + 1) / numChannels;
@@ -27,7 +28,6 @@ void MultiChanDiffuser::init(double sampleRate, int numChannels, double delayRan
         const bool polarity = rand() % 2 == 0;
         this->delayLines.emplace_back(delayLength, polarity);
     }
-    mixer.reset(new hadamardMatrix(numChannels));
 }
 
 void MultiChanDiffuser::setDiffusionTimeMs(double sampleRate, double timeMs) {
@@ -50,7 +50,7 @@ void MultiChanDiffuser::processSamples(float* samples) {
         this->delayLines[i].setSample(samples[i]);
         samples[i] = this->delayLines[i].getSample();
     }
-    mixer->processSamples(samples);
+    mixer.processSamples(samples);
 }
 
 void MultiChanDiffuser::splitBuffer(juce::AudioBuffer<float>& buffer, juce::AudioBuffer<float>* newBuffer, int numSamples, int numChannels) {
@@ -81,7 +81,6 @@ void MultiChanDiffuser::mergeBuffer(juce::AudioBuffer<float>* buffIn, juce::Audi
 void MultiChanDiffuser::processMultiChannel(juce::AudioBuffer<float>* buffer) {
     jassert(buffer->getNumChannels() == this->numChannels);
     const int numSamples = buffer->getNumSamples();
-    float* samples = new float[this->numChannels];
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
 		for (int i = 0; i < this->numChannels; ++i) {
 			samples[i] = buffer->getSample(i, sampleIndex);
@@ -91,7 +90,6 @@ void MultiChanDiffuser::processMultiChannel(juce::AudioBuffer<float>* buffer) {
 			buffer->setSample(i, sampleIndex, samples[i]);
 		}
     }
-    delete[] samples;
 }
 
 

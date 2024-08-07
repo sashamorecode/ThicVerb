@@ -16,11 +16,14 @@
 class hadamardMatrix {
 public:
     hadamardMatrix(int numChannels);
+    ~hadamardMatrix();
     void processSamples(float* samples);
 private:
     int numChannels;
-    std::unique_ptr<float[]> matrix;
-    std::unique_ptr<float[]> sampleAccum;
+    float* matrix = nullptr;
+    float* sampleAccum = nullptr;
+    //std::unique_ptr<float*> matrix;
+    //std::unique_ptr<float*> sampleAccum;
 };
 
 class DelayLine {
@@ -63,5 +66,5 @@ private:
     std::vector<std::unique_ptr<IndependentDelayLine>> delayLines;
     std::unique_ptr<float[]> sampleTemp;
     std::unique_ptr<float[]> sampleDelayedTemp;
-    std::unique_ptr<hadamardMatrix> mixer;
+    hadamardMatrix mixer;
 };

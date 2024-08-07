@@ -18,6 +18,10 @@ class MultiChanDiffuser
 {
 public:
     MultiChanDiffuser(double sampleRate, int numChannels, double delayRangeMs);
+    ~MultiChanDiffuser() {
+		delete[] samples;
+        delayLines.clear();
+	}
     void init(double sampleRate, int numChannels, double delayRangeMs);
     void setDiffusionTimeMs(double sampleRate, double timeMs);
     void processSamples(float* samples);
@@ -28,7 +32,8 @@ public:
 private:
     int numChannels;
     std::vector<DelayLine> delayLines;
-    std::unique_ptr<hadamardMatrix> mixer = nullptr;
+    hadamardMatrix mixer;
+    float* samples;
     double delayRangeMs;
 };
 

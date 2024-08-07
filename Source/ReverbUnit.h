@@ -30,5 +30,5 @@ private:
     float lastDiffusionTimeMs;
     std::atomic<float>* randomSeed;
     float lastRandomSeed;
-    std::unique_ptr<juce::AudioBuffer<float>> tempSplitBuffer;
+    juce::AudioBuffer<float> tempSplitBuffer;
 };

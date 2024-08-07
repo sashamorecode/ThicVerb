@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "TimeKnob.h"
 
 //==============================================================================
 /**
@@ -29,10 +30,14 @@ private:
     // access the processor object that created it.
     ThicVerbAudioProcessor& audioProcessor;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ThicVerbAudioProcessorEditor)
     juce::Slider randSeedSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> randSeedAttachment;
 
-    juce::Slider diffusionLengthSlider;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> diffusionLengthAttachment;
+
+    std::unique_ptr<TimeKnob> diffusionLengthKnob;
+    std::unique_ptr<TimeKnob> decayLengthKnob;
+    std::unique_ptr<TimeKnob> decayComplexityKnob;
+    std::unique_ptr<TimeKnob> roomSizeKnob;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ThicVerbAudioProcessorEditor)
 };

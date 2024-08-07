@@ -24,7 +24,7 @@ ThicVerbAudioProcessor::ThicVerbAudioProcessor()
     parameters(*this, nullptr, juce::Identifier{ "PARAMS" }, {
         std::make_unique<juce::AudioParameterInt>("randomSeed", "Random Seed", 1, 1000, 1),
         std::make_unique<juce::AudioParameterFloat>("diffusionTimeMs", "Diffusion Length", 0.0f, 300.0f, 60.0f),
-        std::make_unique<juce::AudioParameterFloat>("feedbackGain", "Feedback Gain", 0.0f, 1.0f, 0.85f),
+        std::make_unique<juce::AudioParameterFloat>("feedbackGain", "Feedback Gain", 0.0f, 0.99f, 0.85f),
         std::make_unique<juce::AudioParameterFloat>("delayLengthMs", "Delay Length", 0.0f, 50.0f, 10.0f),
         std::make_unique<juce::AudioParameterFloat>("delayRangeMs", "Delay Range", 0.0f, 200.0f, 15.0f)
         })
@@ -102,14 +102,13 @@ void ThicVerbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    this->reverb.reset(new ReverbUnit(sampleRate, 32, samplesPerBlock, parameters));
+    this->reverb.reset(new ReverbUnit(sampleRate, 64, samplesPerBlock, parameters));
 }
 
 void ThicVerbAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    this->reverb.reset();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -179,13 +178,24 @@ void ThicVerbAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    std::unique_ptr<juce::XmlElement> xmlState(parameters.state.createXml());
+    copyXmlToBinary(*xmlState, destData);
+    xmlState.reset();
 }
 
 void ThicVerbAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
+    if (xmlState.get() != nullptr) {
+        if (xmlState->hasTagName(parameters.state.getType())) {
+			parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+		}
+	}
+    xmlState.reset();
 }
+
 
 //==============================================================================
 // This creates new instances of the plugin..
