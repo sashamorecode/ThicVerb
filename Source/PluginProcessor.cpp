@@ -26,13 +26,16 @@ ThicVerbAudioProcessor::ThicVerbAudioProcessor()
         std::make_unique<juce::AudioParameterFloat>("diffusionTimeMs", "Diffusion Length", 0.0f, 300.0f, 60.0f),
         std::make_unique<juce::AudioParameterFloat>("feedbackGain", "Feedback Gain", 0.0f, 0.99f, 0.85f),
         std::make_unique<juce::AudioParameterFloat>("delayLengthMs", "Delay Length", 0.0f, 50.0f, 10.0f),
-        std::make_unique<juce::AudioParameterFloat>("delayRangeMs", "Delay Range", 0.0f, 200.0f, 15.0f)
+        std::make_unique<juce::AudioParameterFloat>("delayRangeMs", "Delay Range", 0.0f, 200.0f, 15.0f),
+        std::make_unique<juce::AudioParameterBool>("highQuality", "High Quality", false),
         })
 {
+    highQuality = parameters.getRawParameterValue("highQuality");
 }
 
 ThicVerbAudioProcessor::~ThicVerbAudioProcessor()
 {
+	this->reverb.reset(nullptr);
 }
 
 //==============================================================================
@@ -102,13 +105,14 @@ void ThicVerbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    this->reverb.reset(new ReverbUnit(sampleRate, 64, samplesPerBlock, parameters));
+    this->reverb.reset(new ReverbUnit(sampleRate, 32, samplesPerBlock, parameters));
 }
 
 void ThicVerbAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    this->reverb.reset(nullptr);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -143,6 +147,15 @@ void ThicVerbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     
+    if (highQuality->load() > 0.5 && !curQuality) {
+        curQuality = true;
+        reverb.reset(new ReverbUnit(getSampleRate(), 64, buffer.getNumSamples(), parameters));
+	}
+    else if (highQuality->load() < 0.5 && curQuality) {
+		curQuality = false;
+		reverb.reset(new ReverbUnit(getSampleRate(), 32, buffer.getNumSamples(), parameters));
+    }
+
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
     // guaranteed to be empty - they may contain garbage).

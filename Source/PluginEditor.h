@@ -32,12 +32,14 @@ private:
 
     juce::Slider randSeedSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> randSeedAttachment;
-
+    juce::ToggleButton highQualityButton;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> highQualityAttachment;
 
     std::unique_ptr<TimeKnob> diffusionLengthKnob;
     std::unique_ptr<TimeKnob> decayLengthKnob;
     std::unique_ptr<TimeKnob> decayComplexityKnob;
     std::unique_ptr<TimeKnob> roomSizeKnob;
+    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ThicVerbAudioProcessorEditor)
 };

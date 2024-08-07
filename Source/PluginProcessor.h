@@ -59,4 +59,6 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ThicVerbAudioProcessor)
     juce::AudioProcessorValueTreeState parameters;
     std::unique_ptr<ReverbUnit> reverb;
+    std::atomic<float>* highQuality;
+    bool curQuality;
 };
