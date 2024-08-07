@@ -35,7 +35,7 @@ public:
     bool polarity;
 private:
 	int delayLength;
-    std::unique_ptr<float[]> delayBuffer;
+    float delayBuffer[MAX_DELAY_LENGTH_SAMPLES];
     int curIndex;
 };
 
@@ -47,7 +47,7 @@ public:
     void setSample(float sample);
 private:
     int delayNumSamples;
-    std::unique_ptr<float[]> delayBuffer;
+    float delayBuffer[MAX_DELAY_LENGTH_SAMPLES];
     int curIndex;
 };
 

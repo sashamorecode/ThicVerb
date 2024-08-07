@@ -11,7 +11,7 @@
 #include "DelayLine.h"
 
 DelayLine::DelayLine(int length, bool polarity) {
-    delayBuffer.reset(new float[MAX_DELAY_LENGTH_SAMPLES]);
+    jassert(length < MAX_DELAY_LENGTH_SAMPLES);
     for (int i = 0; i < MAX_DELAY_LENGTH_SAMPLES; ++i) {
         delayBuffer[i] = 0;
     }
@@ -23,8 +23,10 @@ DelayLine::DelayLine(int length, bool polarity) {
 
 void DelayLine::setDelayLength(int length) {
     jassert(length < MAX_DELAY_LENGTH_SAMPLES);
-    curIndex += (length - delayLength);
-    curIndex = curIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + curIndex : curIndex;
+    if (length < delayLength) {
+		curIndex += (length - delayLength);
+		curIndex = curIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + curIndex : curIndex;
+    }
     delayLength = length;
 }
 
@@ -40,7 +42,7 @@ float DelayLine::getSample() {
 }
 
 IndependentDelayLine::IndependentDelayLine(int numSamples) {
-    this->delayBuffer.reset(new float[MAX_DELAY_LENGTH_SAMPLES]);
+    jassert(numSamples < MAX_DELAY_LENGTH_SAMPLES);
     for (int i = 0; i < MAX_DELAY_LENGTH_SAMPLES; ++i) {
 		delayBuffer[i] = 0;
 	}
@@ -49,18 +51,21 @@ IndependentDelayLine::IndependentDelayLine(int numSamples) {
 }
 
 void IndependentDelayLine::setDelayLength(int numSamples) {
-    curIndex += (numSamples - delayNumSamples);
-    curIndex = curIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + curIndex : curIndex;
+    jassert(numSamples < MAX_DELAY_LENGTH_SAMPLES);
+    if (numSamples < delayNumSamples) {
+        curIndex += (numSamples - delayNumSamples);
+        curIndex = curIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + curIndex : curIndex;
+	}
     delayNumSamples = numSamples;
 }
 float IndependentDelayLine::getSample() {
-    jassert((curIndex + 1) && delayNumSamples);
 	const int delayedIndex = this->curIndex - this->delayNumSamples;
     jassert(delayedIndex < MAX_DELAY_LENGTH_SAMPLES);
-    return delayBuffer.get()[delayedIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + delayedIndex : delayedIndex];
+    return delayBuffer[delayedIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + delayedIndex : delayedIndex];
 }
 void IndependentDelayLine::setSample(float sample) {
-	delayBuffer.get()[curIndex] = sample;
+    jassert(curIndex < MAX_DELAY_LENGTH_SAMPLES);
+	delayBuffer[curIndex] = sample;
 	curIndex = (curIndex + 1) % MAX_DELAY_LENGTH_SAMPLES;
 }
 
