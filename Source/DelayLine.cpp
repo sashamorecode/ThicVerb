@@ -41,34 +41,6 @@ float DelayLine::getSample() {
     return delayBuffer[delayedIndex] * (this->polarity ? 1 : -1);
 }
 
-IndependentDelayLine::IndependentDelayLine(int numSamples) {
-    jassert(numSamples < MAX_DELAY_LENGTH_SAMPLES);
-    for (int i = 0; i < MAX_DELAY_LENGTH_SAMPLES; ++i) {
-		delayBuffer[i] = 0;
-	}
-    this->delayNumSamples = numSamples;
-    this->curIndex = 0;
-}
-
-void IndependentDelayLine::setDelayLength(int numSamples) {
-    jassert(numSamples < MAX_DELAY_LENGTH_SAMPLES);
-    if (numSamples < delayNumSamples) {
-        curIndex += (numSamples - delayNumSamples);
-        curIndex = curIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + curIndex : curIndex;
-	}
-    delayNumSamples = numSamples;
-}
-float IndependentDelayLine::getSample() {
-	const int delayedIndex = this->curIndex - this->delayNumSamples;
-    jassert(delayedIndex < MAX_DELAY_LENGTH_SAMPLES);
-    return delayBuffer[delayedIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + delayedIndex : delayedIndex];
-}
-void IndependentDelayLine::setSample(float sample) {
-    jassert(curIndex < MAX_DELAY_LENGTH_SAMPLES);
-	delayBuffer[curIndex] = sample;
-	curIndex = (curIndex + 1) % MAX_DELAY_LENGTH_SAMPLES;
-}
-
 MultiChanDelayLine::MultiChanDelayLine(double sampleRate, int numChannels, std::atomic<float>* feedbackParam)  : mixer(numChannels) {
     this->numChannels = numChannels;
     this->curIndex = 0;
@@ -76,7 +48,7 @@ MultiChanDelayLine::MultiChanDelayLine(double sampleRate, int numChannels, std::
     this->sampleRate = sampleRate;
     delayLines.clear();
     for (int i = 0; i < numChannels; ++i) {
-        delayLines.emplace_back(new IndependentDelayLine(100));
+        delayLines.emplace_back(std::make_unique<DelayLine>(100, true));
     }
     setDelayLengths(20, 10);
     sampleDelayedTemp.reset(new float[numChannels]);
@@ -101,7 +73,7 @@ void MultiChanDelayLine::getSamples(float* samples) {
 }
 void MultiChanDelayLine::setSamples(float* samples) {
     for (int i = 0; i < numChannels; ++i) {
-		delayLines[i]->setSample(samples[i]);
+        delayLines[i]->setSample(samples[i]);
 	}
 }
 

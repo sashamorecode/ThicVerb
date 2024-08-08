@@ -39,18 +39,6 @@ private:
     int curIndex;
 };
 
-class IndependentDelayLine {
-public:
-    IndependentDelayLine(int numSamples);
-    void setDelayLength(int numSamples);
-    float getSample();
-    void setSample(float sample);
-private:
-    int delayNumSamples;
-    float delayBuffer[MAX_DELAY_LENGTH_SAMPLES];
-    int curIndex;
-};
-
 class MultiChanDelayLine {
 public:
     MultiChanDelayLine(double sampleRate, int numChannels, std::atomic<float>* feedbackGain);
@@ -63,7 +51,7 @@ private:
 	int curIndex;
     double sampleRate;
     std::atomic<float>* feedbackGain;
-    std::vector<std::unique_ptr<IndependentDelayLine>> delayLines;
+    std::vector<std::unique_ptr<DelayLine>> delayLines;
     std::unique_ptr<float[]> sampleTemp;
     std::unique_ptr<float[]> sampleDelayedTemp;
     hadamardMatrix mixer;
