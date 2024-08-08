@@ -18,37 +18,36 @@ void MultiChanDiffuser::init(double sampleRate, int numChannels, double delayRan
     samples = new float[numChannels];
     this->delayRangeMs = delayRangeMs;
     this->numChannels = numChannels;
-    const double delaySampleRange = sampleRate * delayRangeMs * 0.001;
     this->delayLines.clear();
     for (int i = 0; i < numChannels; ++i) {
-        const double rangeMax = delaySampleRange * (i + 1) / numChannels;
-        const double rangeMin = delaySampleRange * i / numChannels;
-        const double randDouble = static_cast<double>(abs(rand()))/RAND_MAX;
-        const int delayLength = static_cast<int>(rangeMin + randDouble * (rangeMax - rangeMin) + 1);
-        const bool polarity = rand() % 2 == 0;
-        this->delayLines.emplace_back(delayLength, polarity);
+        const double rangeMax = delayRangeMs * (i + 1) / numChannels;
+        const double rangeMin = delayRangeMs * i / numChannels;
+        const float range = static_cast<float>(rangeMax - rangeMin);
+        std::atomic<float>* delayLength = new std::atomic<float>(rangeMin);
+        std::atomic<float>* delayRange = new std::atomic<float>(range);
+		const bool polarity = rand() % 2 == 0;
+		delayRanges.push_back(delayRange);
+        delayLengths.push_back(delayLength);
+        this->delayLines.emplace_back(delayLength, delayRange, polarity, sampleRate);
     }
 }
 
-void MultiChanDiffuser::setDiffusionTimeMs(double sampleRate, double timeMs) {
-    this->delayRangeMs = timeMs;
-    const double delaySampleRange =  sampleRate * timeMs * 0.001;
-    for (int i = 0; i < numChannels; ++i) {
-        const double rangeMax = delaySampleRange * (i + 1) / numChannels;
-        const double rangeMin = delaySampleRange * i / numChannels;
-        const double randDouble = static_cast<double>(abs(rand()))/RAND_MAX;
-        const int delayLength = static_cast<int>(rangeMin + randDouble * (rangeMax - rangeMin) + 1);
-        const bool polarity = rand() % 2 == 0;
-		this->delayLines[i].setDelayLength(delayLength);
-        this->delayLines[i].polarity = polarity;
-    }
+void MultiChanDiffuser::setDiffusionTimeMs(double sampleRate, double diffusionTimeMs) {
+	for (int i = 0; i < numChannels; ++i) {
+		const double rangeMax = diffusionTimeMs * (i + 1) / numChannels;
+		const double rangeMin = diffusionTimeMs * i / numChannels;
+		const float range = static_cast<float>(rangeMax - rangeMin);
+		delayRanges[i]->store(range);
+		delayLengths[i]->store(rangeMin);
+	}
 }
-
 
 void MultiChanDiffuser::processSamples(float* samples) {
     for (int i = 0; i < this->numChannels; ++i) {
+        jassert(abs(samples[i]) <= 1);
         this->delayLines[i].setSample(samples[i]);
         samples[i] = this->delayLines[i].getSample();
+        jassert(abs(samples[i]) <= 1);
     }
     mixer.processSamples(samples);
 }
@@ -84,9 +83,11 @@ void MultiChanDiffuser::processMultiChannel(juce::AudioBuffer<float>* buffer) {
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
 		for (int i = 0; i < this->numChannels; ++i) {
 			samples[i] = buffer->getSample(i, sampleIndex);
+            jassert(abs(samples[i]) <= 1);
         }
         this->processSamples(samples);
         for (int i = 0; i < this->numChannels; ++i) {
+            jassert(abs(samples[i]) <= 1);
 			buffer->setSample(i, sampleIndex, samples[i]);
 		}
     }

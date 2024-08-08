@@ -10,24 +10,16 @@
 
 #include "DelayLine.h"
 
-DelayLine::DelayLine(int length, bool polarity) {
-    jassert(length < MAX_DELAY_LENGTH_SAMPLES);
+DelayLine::DelayLine(std::atomic<float>* length, std::atomic<float>* range, bool polarity, double sampleRate) {
     for (int i = 0; i < MAX_DELAY_LENGTH_SAMPLES; ++i) {
         delayBuffer[i] = 0;
     }
-    curIndex = 0;
+    curIndex = 0; 
     this->polarity = polarity;
+    sampleRateMs = sampleRate * 0.001;
     delayLength = length;
-    setDelayLength(length);
-}
-
-void DelayLine::setDelayLength(int length) {
-    jassert(length < MAX_DELAY_LENGTH_SAMPLES);
-    if (length < delayLength) {
-		curIndex += (length - delayLength);
-		curIndex = curIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + curIndex : curIndex;
-    }
-    delayLength = length;
+    delayRange = range;
+    randVal = static_cast<float>(abs(rand())) / RAND_MAX;
 }
 
 void DelayLine::setSample(float sample) {
@@ -35,34 +27,32 @@ void DelayLine::setSample(float sample) {
 	curIndex = (curIndex + 1) % MAX_DELAY_LENGTH_SAMPLES;
 }
 
+inline int DelayLine::getDelayInSampeles() {
+    return static_cast<int>((delayLength->load() + delayRange->load() * randVal) * sampleRateMs) + 1;
+}
+
 float DelayLine::getSample() {
-    int delayedIndex = curIndex - delayLength;
+    const int delayInSamples = getDelayInSampeles();
+    int delayedIndex = curIndex - delayInSamples;
     delayedIndex = delayedIndex < 0 ? MAX_DELAY_LENGTH_SAMPLES + delayedIndex : delayedIndex;
+    jassert(delayedIndex >= 0 && delayedIndex < MAX_DELAY_LENGTH_SAMPLES);
     return delayBuffer[delayedIndex] * (this->polarity ? 1 : -1);
 }
 
-MultiChanDelayLine::MultiChanDelayLine(double sampleRate, int numChannels, std::atomic<float>* feedbackParam)  : mixer(numChannels) {
+MultiChanDelayLine::MultiChanDelayLine(double sampleRate, int numChannels, juce::AudioProcessorValueTreeState& vts) 
+    : mixer(numChannels) {
     this->numChannels = numChannels;
     this->curIndex = 0;
-    this->feedbackGain = feedbackParam;
+    this->feedbackGain = vts.getRawParameterValue("feedbackGain");
     this->sampleRate = sampleRate;
+    std::atomic<float>* delayLength = vts.getRawParameterValue("delayLengthMs");
+    std::atomic<float>* delayRange = vts.getRawParameterValue("delayRangeMs");
     delayLines.clear();
     for (int i = 0; i < numChannels; ++i) {
-        delayLines.emplace_back(std::make_unique<DelayLine>(100, true));
+        delayLines.emplace_back(new DelayLine(delayLength, delayRange, 1, sampleRate));
     }
-    setDelayLengths(20, 10);
     sampleDelayedTemp.reset(new float[numChannels]);
     sampleTemp.reset(new float[numChannels]);
-}
-void MultiChanDelayLine::setDelayLengths(float delayTimeMs, float delayRangeMs) {
-    const int delaySamples = static_cast<int>(sampleRate * delayTimeMs * 0.001);
-    const int delayRangeSamples = static_cast<int>(sampleRate * delayRangeMs * 0.001);
-    for (int i = 0; i < numChannels; ++i) {
-        const float rand = abs(static_cast<float>(std::rand()) / RAND_MAX);
-        jassert(rand >= 0 && rand <= 1.0f);
-        const int delayLength = delaySamples + rand * delayRangeSamples;
-        delayLines[i]->setDelayLength(delayLength);
-	}
 }
 
 void MultiChanDelayLine::getSamples(float* samples) {
@@ -73,6 +63,7 @@ void MultiChanDelayLine::getSamples(float* samples) {
 }
 void MultiChanDelayLine::setSamples(float* samples) {
     for (int i = 0; i < numChannels; ++i) {
+        jassert(samples[i] == 0);
         delayLines[i]->setSample(samples[i]);
 	}
 }
@@ -86,8 +77,10 @@ void MultiChanDelayLine::processBlock(juce::AudioBuffer<float>* buffer) {
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex) {
         getSamples(samplesOld);
         for (int chIndex = 0; chIndex < numChannels; ++chIndex) {
-            samplesNew[chIndex] = buffer->getSample(chIndex, sampleIndex) + feedback * samplesOld[chIndex];
-		}
+            const float sample = buffer->getSample(chIndex, sampleIndex);
+            samplesNew[chIndex] = sample + feedback * samplesOld[chIndex];
+		    jassert(abs(samplesNew[chIndex]) <= 1);
+        }
 		for (int chIndex = 0; chIndex < numChannels; ++chIndex) {
             buffer->setSample(chIndex, sampleIndex, samplesOld[chIndex]);
         }

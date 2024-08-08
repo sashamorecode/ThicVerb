@@ -10,7 +10,6 @@
 
 #pragma once
 #include "MultiChanDiffuser.h"
-#define NUM_DIFFUSERS 2
 class ReverbUnit {
 public:
     ReverbUnit(double sampleRate, int numChannels,int samplesPerBlock ,juce::AudioProcessorValueTreeState& vts);
@@ -22,10 +21,6 @@ private:
     std::array<std::unique_ptr<MultiChanDiffuser>, NUM_DIFFUSERS> diffusers;
     std::unique_ptr<MultiChanDelayLine> feedbackDelay;
     std::atomic<float>* feedbackGain;
-    std::atomic<float>* delayLengthMs;
-    std::atomic<float>* delayRangeMs;
-    float lastDelayLengthMs;
-    float lastDelayRangeMs;
     std::atomic<float>* diffusionTimeMs;
     float lastDiffusionTimeMs;
     std::atomic<float>* randomSeed;

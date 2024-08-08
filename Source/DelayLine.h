@@ -28,21 +28,24 @@ private:
 
 class DelayLine {
 public:
-    DelayLine(int numSamples, bool polarity);
-    void setDelayLength(int numSamples);
+    DelayLine(std::atomic<float>* length, std::atomic<float>* range, bool polarity, double sampleRate);
     void setSample(float sample);
     float getSample();
     bool polarity;
 private:
-	int delayLength;
+    inline int getDelayInSampeles();
+    std::atomic<float>* delayLength;
+    std::atomic<float>* delayRange;
+    float randVal;
+    float sampleRateMs;
     float delayBuffer[MAX_DELAY_LENGTH_SAMPLES];
     int curIndex;
+
 };
 
 class MultiChanDelayLine {
 public:
-    MultiChanDelayLine(double sampleRate, int numChannels, std::atomic<float>* feedbackGain);
-    void setDelayLengths(float delayTimeMs, float delayRangeMs);
+    MultiChanDelayLine(double sampleRate, int numChannels, juce::AudioProcessorValueTreeState& vts);
     void processBlock(juce::AudioBuffer<float>* buffer);
     void getSamples(float* samples);
     void setSamples(float* samples);
